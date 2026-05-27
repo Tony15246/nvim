@@ -1,37 +1,91 @@
-vim.g.base46_cache = vim.fn.stdpath("data") .. "/base46/"
+require("vim._core.ui2").enable({})
+
+-- Options
 vim.g.mapleader = " "
 
--- bootstrap lazy and all plugins
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+vim.o.number = true
+vim.o.relativenumber = true
+vim.opt.tabstop = 4
+vim.opt.softtabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+vim.o.winborder = "rounded"
+vim.opt.completeopt = "menuone,noinsert,preselect,fuzzy,nosort,preview"
+vim.opt.clipboard:append("unnamedplus")
+vim.g.clipboard = "win32yank"
 
-if not vim.uv.fs_stat(lazypath) then
-    local repo = "https://github.com/folke/lazy.nvim.git"
-    vim.fn.system({ "git", "clone", "--filter=blob:none", repo, "--branch=stable", lazypath })
+-- Define LSP servers to enable
+local servers = { "lua_ls", "pyright", "ts_ls", "gopls" }
+
+-- Plugins setup
+vim.pack.add({
+    "https://github.com/folke/tokyonight.nvim",
+    "https://github.com/folke/which-key.nvim",
+    "https://github.com/neovim/nvim-lspconfig",
+    "https://github.com/nvim-mini/mini.nvim",
+    "https://github.com/lewis6991/gitsigns.nvim",
+    "https://github.com/mason-org/mason.nvim",
+    "https://github.com/romus204/tree-sitter-manager.nvim",
+})
+
+require("tree-sitter-manager").setup({
+    ensure_installed = { "lua", "python", "tsx", "go" },
+    auto_install = true,
+    highlight = true,
+})
+
+require("which-key").setup()
+
+require("gitsigns").setup({})
+
+require("mini.pick").setup()
+require("mini.completion").setup()
+require("mini.pairs").setup()
+require("mini.files").setup()
+require("mini.cmdline").setup()
+require("mini.icons").setup()
+require("mini.git").setup()
+require("mini.diff").setup()
+require("mini.statusline").setup()
+require('mini.comment').setup({
+    mappings = {
+        comment_line = '<leader>/',
+        comment_visual = '<leader>/',
+    },
+})
+
+vim.cmd.colorscheme("tokyonight-night")
+
+-- Keymaps
+vim.keymap.set("n", "<leader>f", ":Pick files<CR>", { desc = "Pick files by name" })
+vim.keymap.set("n", "<leader>h", ":Pick help<CR>", { desc = "Pick help doc" })
+vim.keymap.set("n", "<leader>g", ":Pick grep_live<CR>", { desc = "Grep word in workspace" })
+vim.keymap.set("n", "<leader>b", ":Pick buffers<CR>", { desc = "Pick buffers by name" })
+
+vim.keymap.set("n", "<leader>e", "<cmd>lua MiniFiles.open()<CR>", { desc = "Toggle mini file explorer" })
+
+-- LSP
+for _, server in ipairs(servers) do
+    vim.lsp.enable(server)
 end
 
-vim.opt.rtp:prepend(lazypath)
+require("mason").setup()
 
-local lazy_config = require("configs.lazy")
+vim.keymap.set('n', 'gd', vim.lsp.buf.definition, { desc = "Go to definition" })
+vim.keymap.set("n", "fm", vim.lsp.buf.format, { desc = "Format Local buffer" })
+vim.keymap.set("n", "df", vim.diagnostic.open_float, { desc = "Show line diagnostics" })
 
--- load plugins
-require("lazy").setup({
-    {
-        "NvChad/NvChad",
-        lazy = false,
-        branch = "v2.5",
-        import = "nvchad.plugins",
+vim.diagnostic.config({ virtual_text = true })
+
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities = vim.tbl_deep_extend("force", capabilities, require("mini.completion").get_lsp_capabilities())
+
+vim.lsp.config("*", { capabilities = capabilities })
+
+vim.lsp.config("lua_ls", {
+    settings = {
+        Lua = {
+            diagnostics = { globals = { "vim", "mpv" } },
+        },
     },
-
-    { import = "plugins" },
-}, lazy_config)
-
--- load theme
-dofile(vim.g.base46_cache .. "defaults")
-dofile(vim.g.base46_cache .. "statusline")
-
-require("options")
-require("autocmds")
-
-vim.schedule(function()
-    require("mappings")
-end)
+})
