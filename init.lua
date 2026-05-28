@@ -26,6 +26,7 @@ vim.pack.add({
     "https://github.com/lewis6991/gitsigns.nvim",
     "https://github.com/mason-org/mason.nvim",
     "https://github.com/romus204/tree-sitter-manager.nvim",
+    "https://github.com/akinsho/toggleterm.nvim",
 })
 
 require("tree-sitter-manager").setup({
@@ -36,7 +37,12 @@ require("tree-sitter-manager").setup({
 
 require("which-key").setup()
 
-require("gitsigns").setup({})
+require("gitsigns").setup({ attach_to_untracked = true })
+
+require("toggleterm").setup({
+    open_mapping = [[<c-t>]],
+    direction = "float",
+})
 
 require("mini.pick").setup()
 require("mini.completion").setup()
@@ -45,8 +51,9 @@ require("mini.files").setup()
 require("mini.cmdline").setup()
 require("mini.icons").setup()
 require("mini.git").setup()
-require("mini.diff").setup()
 require("mini.statusline").setup()
+require("mini.tabline").setup()
+require('mini.bufremove').setup()
 require('mini.comment').setup({
     mappings = {
         comment_line = '<leader>/',
@@ -63,6 +70,12 @@ vim.keymap.set("n", "<leader>g", ":Pick grep_live<CR>", { desc = "Grep word in w
 vim.keymap.set("n", "<leader>b", ":Pick buffers<CR>", { desc = "Pick buffers by name" })
 
 vim.keymap.set("n", "<leader>e", "<cmd>lua MiniFiles.open()<CR>", { desc = "Toggle mini file explorer" })
+
+vim.keymap.set('n', '<leader>x', function()
+    require('mini.bufremove').delete(0, false)
+end, { desc = 'Close current buffer' })
+vim.keymap.set('n', '<Tab>', '<cmd>bnext<cr>', { desc = 'Next buffer' })
+vim.keymap.set('n', '<S-Tab>', '<cmd>bprevious<cr>', { desc = 'Previous buffer' })
 
 -- LSP
 for _, server in ipairs(servers) do
